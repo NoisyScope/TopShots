@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read # This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -23,17 +23,20 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: npm install, build, and test
+      - name: Install Expo CLI and dependencies
         run: |
+          npm install -g expo-cli
           npm install
-          npm run build --if-present
-          npm run test --if-present
 
+      - name: Build web application
+        run: |
+          npx expo start --no-dev --max-workers 1 --web --output-dir dist
+      
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: dist
 
   deploy:
     runs-on: ubuntu-latest
@@ -47,19 +50,21 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
+          path: .
       
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_3ED105696BC94F818465A743C5FFB529 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_06F270CCF8F44D4D9393CEB8DD3343EF }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D5251DDE7CA6431EA027A5F4D8765F33 }}
+          client-id: ${{ secrets.__clientidsecretname__ }}
+          tenant-id: ${{ secrets.__tenantidsecretname__ }}
+          subscription-id: ${{ secrets.__subscriptionidsecretname__ }}
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'TopShotsGolfApp'
+          app-name: 'TopShotsWebApp'
           slot-name: 'Production'
           package: .
+
           
